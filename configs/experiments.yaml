@@ -1,0 +1,49 @@
+# Experiment suites. Each entry becomes one `python -m dvit.train` invocation.
+#
+# `launch: torchrun` with nproc > 1 uses a real process group. Anything that
+# asks for nproc > 1 on mps is refused by dvit.dist rather than silently
+# downgraded, so a suite either runs as written or fails loudly.
+
+smoke:
+  # Fast correctness pass on a laptop. 2% of CIFAR-10, 2 epochs. These runs
+  # exist to prove the pipeline executes on every code path. They are NOT
+  # accuracy results and the dashboard labels them as smoke.
+  defaults: {epochs: 2, subset-fraction: 0.02, num-workers: 0, warmup-epochs: 0}
+  runs:
+    - {name: smoke-mps-fp32,  device: mps, nproc: 1, precision: fp32, strategy: single}
+    - {name: smoke-mps-amp,   device: mps, nproc: 1, precision: amp,  strategy: single}
+    - {name: smoke-cpu-ws1,   device: cpu, nproc: 1, precision: fp32, strategy: single}
+    - {name: smoke-cpu-ws2,   device: cpu, nproc: 2, precision: fp32, strategy: ddp}
+    - {name: smoke-cpu-ws2-ga2, device: cpu, nproc: 2, precision: fp32, strategy: ddp, grad-accum-steps: 2}
+
+laptop:
+  # Single device Apple silicon baseline on the full dataset. Gives a real
+  # accuracy curve but no scaling story, because there is one GPU.
+  defaults: {epochs: 30, batch-size: 128, num-workers: 4}
+  runs:
+    - {name: mps-fp32,     device: mps, nproc: 1, precision: fp32, strategy: single}
+    - {name: mps-amp,      device: mps, nproc: 1, precision: amp,  strategy: single}
+    - {name: mps-amp-compiled, device: mps, nproc: 1, precision: amp, strategy: single, compile: true}
+
+gloo-overhead:
+  # Deliberately measures a slowdown. Multi process gloo on one CPU adds
+  # communication without adding silicon, so throughput should FALL. Recording
+  # that is the honest version of "we tested scaling on a laptop".
+  defaults: {epochs: 3, subset-fraction: 0.1, batch-size: 64, num-workers: 0, device: cpu}
+  runs:
+    - {name: gloo-ws1, nproc: 1, precision: fp32, strategy: single}
+    - {name: gloo-ws2, nproc: 2, precision: fp32, strategy: ddp}
+    - {name: gloo-ws4, nproc: 4, precision: fp32, strategy: ddp}
+
+kaggle:
+  # The real one. Two T4s, NCCL. T4 is sm_75 so amp resolves to fp16 plus a
+  # GradScaler, not bf16. Run this on Kaggle via notebooks/kaggle_2xt4.ipynb.
+  defaults: {epochs: 30, batch-size: 128, num-workers: 2, device: cuda}
+  runs:
+    - {name: t4-ws1-fp32,        nproc: 1, precision: fp32, strategy: single}
+    - {name: t4-ws1-amp,         nproc: 1, precision: amp,  strategy: single}
+    - {name: t4-ws2-ddp-fp32,    nproc: 2, precision: fp32, strategy: ddp}
+    - {name: t4-ws2-ddp-amp,     nproc: 2, precision: amp,  strategy: ddp}
+    - {name: t4-ws2-ddp-amp-compiled, nproc: 2, precision: amp, strategy: ddp, compile: true}
+    - {name: t4-ws2-fsdp-amp,    nproc: 2, precision: amp,  strategy: fsdp}
+    - {name: t4-ws2-ddp-amp-ga2, nproc: 2, precision: amp,  strategy: ddp, grad-accum-steps: 2}
