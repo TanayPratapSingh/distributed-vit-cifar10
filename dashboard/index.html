@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Distributed ViT on CIFAR-10</title>
+<style>
+:root{--bg:#fbfbfd;--fg:#14161a;--muted:#6b7280;--card:#fff;--line:#e6e8ec;
+--accent:#4f7cff;--warn-bg:#fff7ed;--warn-line:#f2994a;--code:#f3f4f6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--bg:#0e1014;--fg:#e8eaed;--muted:#9aa2ae;--card:#161a21;--line:#262b34;
+--warn-bg:#241c12;--code:#1d222a}}
+:root[data-theme="dark"]{--bg:#0e1014;--fg:#e8eaed;--muted:#9aa2ae;--card:#161a21;
+--line:#262b34;--warn-bg:#241c12;--code:#1d222a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+font:15px/1.6 ui-sans-serif,-apple-system,"Segoe UI",Inter,system-ui,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:48px 16px 80px}
+h1{font-size:30px;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-size:18px;letter-spacing:-.01em;margin:40px 0 4px}
+.sub{color:var(--muted);margin:0 0 4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+padding:20px;margin-top:14px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:760px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:11.5px;
+text-transform:uppercase;letter-spacing:.05em;padding:0 10px 8px;white-space:nowrap}
+td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:top}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.mono,code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+td.mono{white-space:nowrap}
+code{background:var(--code);padding:1px 5px;border-radius:4px}
+.eff{color:var(--muted);font-size:11.5px}
+.badge{font-size:10px;padding:2px 6px;border-radius:99px;vertical-align:middle;
+text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.badge.smoke{background:var(--warn-bg);color:var(--warn-line);
+border:1px solid var(--warn-line)}
+.note{background:var(--warn-bg);border:1px solid var(--warn-line);
+border-radius:10px;padding:14px 16px;margin-top:14px;font-size:13.5px}
+.note b{display:block;margin-bottom:4px}
+.grid{stroke:var(--line);stroke-width:1}
+.axis{fill:var(--muted);font-size:11px}
+.series{font-size:11.5px;font-weight:600}
+.bar-label{fill:var(--fg);font-size:12px;font-family:ui-monospace,Menlo,monospace}
+.bar-value{fill:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);font-style:italic;text-align:center;padding:18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.stat .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.stat .v{font-size:22px;font-weight:650;letter-spacing:-.02em;margin-top:2px;
+font-variant-numeric:tabular-nums}
+footer{color:var(--muted);font-size:12.5px;margin-top:48px;border-top:1px solid var(--line);
+padding-top:16px}
+@media(max-width:640px){.wrap{padding:28px 16px 60px}h1{font-size:24px}}
+</style></head><body><div class="wrap">
+<h1>Distributed ViT on CIFAR-10</h1>
+<p class="sub">A vision transformer trained across devices, with the systems
+knobs measured rather than assumed.</p>
+<p class="sub">Measured on: Apple arm64 (MPS), CPU arm</p>
+
+<div class="stats" style="margin-top:22px"><div class='stat'><div class='k'>runs recorded</div><div class='v'>11</div></div><div class='stat'><div class='k'>hardware</div><div class='v'>2</div></div><div class='stat'><div class='k'>best top-1</div><div class='v'>80.77%</div></div><div class='stat'><div class='k'>peak throughput</div><div class='v'>2,361 img/s</div></div></div>
+
+
+<h2>Scaling and configuration</h2>
+<p class="sub"><b>Rank speedup</b> holds every other setting fixed and varies
+only the rank count, so the percentage beside it is a real scaling efficiency.
+<b>vs fp32</b> compares against the one rank fp32 uncompiled run on the same
+hardware, which is where precision and compilation effects show up. Both are
+computed only within one hardware group. Blank means no comparable baseline
+was measured.</p>
+<div class="card"><table>
+<thead><tr><th>run</th><th>hardware</th><th>ranks</th><th>backend</th>
+<th>strategy</th><th>precision</th><th>eff. batch</th><th>img/s</th>
+<th>rank speedup</th><th>vs fp32</th><th>peak MB</th><th>top-1</th></tr></thead>
+<tbody><tr><td class='mono'>mps-amp</td><td>Apple arm64 (MPS)</td><td>1</td><td>none</td><td>single</td><td>amp</td><td class='num'>128</td><td class='num'>726</td><td class='num'>baseline</td><td class='num'>0.68x</td><td class='num'>n/a</td><td class='num'>80.77%</td></tr><tr><td class='mono'>mps-amp-compiled</td><td>Apple arm64 (MPS)</td><td>1</td><td>none</td><td>single</td><td>amp + compile</td><td class='num'>128</td><td class='num'>2,361</td><td class='num'>baseline</td><td class='num'>2.23x</td><td class='num'>n/a</td><td class='num'>80.72%</td></tr><tr><td class='mono'>mps-fp32</td><td>Apple arm64 (MPS)</td><td>1</td><td>none</td><td>single</td><td>fp32</td><td class='num'>128</td><td class='num'>1,061</td><td class='num'>baseline</td><td class='num'>reference</td><td class='num'>n/a</td><td class='num'>80.61%</td></tr><tr><td class='mono'>gloo-ws1</td><td>CPU arm</td><td>1</td><td>none</td><td>single</td><td>fp32</td><td class='num'>64</td><td class='num'>552</td><td class='num'>baseline</td><td class='num'>reference</td><td class='num'>n/a</td><td class='num'><span class='eff'>31.6% partial</span></td></tr><tr><td class='mono'>gloo-ws2</td><td>CPU arm</td><td>2</td><td>gloo</td><td>ddp</td><td>fp32</td><td class='num'>128</td><td class='num'>694</td><td class='num'>1.26x <span class=eff>(63%)</span></td><td class='num'>1.26x</td><td class='num'>n/a</td><td class='num'><span class='eff'>28.9% partial</span></td></tr><tr><td class='mono'>gloo-ws4</td><td>CPU arm</td><td>4</td><td>gloo</td><td>ddp</td><td>fp32</td><td class='num'>256</td><td class='num'>879</td><td class='num'>1.59x <span class=eff>(40%)</span></td><td class='num'>1.59x</td><td class='num'>n/a</td><td class='num'><span class='eff'>29.2% partial</span></td></tr></tbody></table></div>
+
+<h2>Median throughput</h2>
+<div class="card"><svg viewBox='0 0 720 220' role='img' aria-label='Median throughput by configuration'><text x='0' y='23' class='bar-label'>mps-amp-compiled</text><rect x='210' y='8' width='420.0' height='20' rx='4' fill='#4f7cff'/><text x='638.0' y='23' class='bar-value'>2,361 img/s</text><text x='0' y='57' class='bar-label'>mps-fp32</text><rect x='210' y='42' width='188.7' height='20' rx='4' fill='#00b3a4'/><text x='406.7' y='57' class='bar-value'>1,061 img/s</text><text x='0' y='91' class='bar-label'>gloo-ws4</text><rect x='210' y='76' width='156.3' height='20' rx='4' fill='#f2994a'/><text x='374.3' y='91' class='bar-value'>879 img/s</text><text x='0' y='125' class='bar-label'>mps-amp</text><rect x='210' y='110' width='129.2' height='20' rx='4' fill='#bb6bd9'/><text x='347.2' y='125' class='bar-value'>726 img/s</text><text x='0' y='159' class='bar-label'>gloo-ws2</text><rect x='210' y='144' width='123.5' height='20' rx='4' fill='#eb5757'/><text x='341.5' y='159' class='bar-value'>694 img/s</text><text x='0' y='193' class='bar-label'>gloo-ws1</text><rect x='210' y='178' width='98.2' height='20' rx='4' fill='#6fcf97'/><text x='316.2' y='193' class='bar-value'>552 img/s</text></svg></div>
+
+<h2>Test accuracy by epoch</h2>
+<div class="card"><svg viewBox='0 0 720 300' role='img' aria-label='Test accuracy against epoch'><line x1='48' y1='268.0' x2='570' y2='268.0' class='grid'/><text x='40' y='272.0' class='axis' text-anchor='end'>0%</text><line x1='48' y1='204.5' x2='570' y2='204.5' class='grid'/><text x='40' y='208.5' class='axis' text-anchor='end'>23%</text><line x1='48' y1='141.0' x2='570' y2='141.0' class='grid'/><text x='40' y='145.0' class='axis' text-anchor='end'>46%</text><line x1='48' y1='77.5' x2='570' y2='77.5' class='grid'/><text x='40' y='81.5' class='axis' text-anchor='end'>70%</text><line x1='48' y1='14.0' x2='570' y2='14.0' class='grid'/><text x='40' y='18.0' class='axis' text-anchor='end'>93%</text><polyline points='48.0,151.8 66.0,134.6 84.0,123.7 102.0,116.4 120.0,110.4 138.0,107.7 156.0,102.6 174.0,91.7 192.0,91.5 210.0,85.1 228.0,77.5 246.0,76.9 264.0,72.8 282.0,68.2 300.0,66.7 318.0,65.3 336.0,61.9 354.0,59.0 372.0,57.4 390.0,53.7 408.0,54.8 426.0,52.9 444.0,51.2 462.0,50.2 480.0,49.5 498.0,48.9 516.0,47.8 534.0,47.3 552.0,47.5 570.0,47.5' fill='none' stroke='#4f7cff' stroke-width='2'/><circle cx='570.0' cy='47.5' r='3' fill='#4f7cff'/><path d='M 574.0 47.5 L 572.0 60.1' stroke='#4f7cff' stroke-width='1' fill='none' opacity='0.45'/><text x='578' y='64.1' class='series' fill='#4f7cff'>mps-amp-compiled</text><polyline points='48.0,157.9 66.0,134.7 84.0,122.0 102.0,113.0 120.0,110.6 138.0,105.2 156.0,101.0 174.0,92.5 192.0,86.2 210.0,86.9 228.0,77.8 246.0,75.9 264.0,71.1 282.0,69.2 300.0,69.2 318.0,64.7 336.0,61.3 354.0,59.6 372.0,59.5 390.0,54.0 408.0,53.2 426.0,53.0 444.0,51.5 462.0,49.3 480.0,48.4 498.0,47.8 516.0,47.7 534.0,47.4 552.0,47.4 570.0,47.1' fill='none' stroke='#00b3a4' stroke-width='2'/><circle cx='570.0' cy='47.1' r='3' fill='#00b3a4'/><path d='M 574.0 47.1 L 572.0 47.1' stroke='#00b3a4' stroke-width='1' fill='none' opacity='0.45'/><text x='578' y='51.1' class='series' fill='#00b3a4'>mps-amp</text><polyline points='48.0,157.9 66.0,133.0 84.0,125.5 102.0,117.9 120.0,106.3 138.0,108.5 156.0,101.8 174.0,92.1 192.0,89.5 210.0,88.0 228.0,77.4 246.0,76.8 264.0,73.8 282.0,69.8 300.0,67.1 318.0,61.9 336.0,62.1 354.0,57.9 372.0,59.3 390.0,53.8 408.0,53.2 426.0,51.8 444.0,51.0 462.0,50.0 480.0,48.4 498.0,48.7 516.0,47.8 534.0,47.9 552.0,47.6 570.0,47.6' fill='none' stroke='#f2994a' stroke-width='2'/><circle cx='570.0' cy='47.6' r='3' fill='#f2994a'/><path d='M 574.0 47.6 L 572.0 73.1' stroke='#f2994a' stroke-width='1' fill='none' opacity='0.45'/><text x='578' y='77.1' class='series' fill='#f2994a'>mps-fp32</text><text x='309.0' y='294' class='axis' text-anchor='middle'>epoch</text></svg></div>
+
+<footer>Generated by <code>python -m dvit.report</code> from
+<code>runs/*.json</code>. Every number on this page traces to a run artifact
+and the command that produced it. Nothing here is typed by hand.</footer>
+</div></body></html>
