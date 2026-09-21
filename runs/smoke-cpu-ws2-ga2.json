@@ -1,0 +1,45 @@
+{
+  "name": "smoke-cpu-ws2-ga2",
+  "world_size": 2,
+  "device_type": "cpu",
+  "backend": "gloo",
+  "precision": "fp32",
+  "compiled": false,
+  "strategy": "ddp",
+  "batch_size_per_rank": 128,
+  "grad_accum_steps": 2,
+  "effective_batch": 512,
+  "epochs": 2,
+  "model_params": 1806538,
+  "hardware": "CPU arm",
+  "data_source": "huggingface parquet mirror (rebuilt, no original md5)",
+  "memory_source": "unavailable on cpu: no allocator high water mark",
+  "torch_version": "2.14.0",
+  "git_commit": "",
+  "command": "torchrun /Users/tanay/Desktop/distributed-vit-cifar10/src/dvit/launch.py --nproc 2 -- --name smoke-cpu-ws2-ga2 --out runs --epochs 2 --subset-fraction 0.02 --num-workers 0 --warmup-epochs 0 --device cpu --precision fp32 --strategy ddp --grad-accum-steps 2",
+  "epochs_log": [
+    {
+      "epoch": 0,
+      "train_loss": 2.3423968156178794,
+      "test_loss": 2.180469036102295,
+      "test_acc": 0.21,
+      "seconds": 1.1618670830066549,
+      "images_per_sec": 661.0050419989402,
+      "lr": 0.001
+    },
+    {
+      "epoch": 1,
+      "train_loss": 2.256061553955078,
+      "test_loss": 2.190833330154419,
+      "test_acc": 0.205,
+      "seconds": 1.1427862499986077,
+      "images_per_sec": 671.6110042097484,
+      "lr": 0.0
+    }
+  ],
+  "peak_memory_mb": 0.0,
+  "total_seconds": 2.3046533330052625,
+  "median_images_per_sec": 666.3080231043443,
+  "best_test_acc": 0.21,
+  "finished": true
+}

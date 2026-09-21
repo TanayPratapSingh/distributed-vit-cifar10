@@ -1,0 +1,45 @@
+{
+  "name": "smoke-mps-fp32",
+  "world_size": 1,
+  "device_type": "mps",
+  "backend": null,
+  "precision": "fp32",
+  "compiled": false,
+  "strategy": "single",
+  "batch_size_per_rank": 128,
+  "grad_accum_steps": 1,
+  "effective_batch": 128,
+  "epochs": 2,
+  "model_params": 1806538,
+  "hardware": "Apple arm64 (MPS)",
+  "data_source": "huggingface parquet mirror (rebuilt, no original md5)",
+  "memory_source": "unavailable on mps: no allocator high water mark",
+  "torch_version": "2.14.0",
+  "git_commit": "",
+  "command": "python /Users/tanay/Desktop/distributed-vit-cifar10/src/dvit/train.py --name smoke-mps-fp32 --out runs --epochs 2 --subset-fraction 0.02 --num-workers 0 --warmup-epochs 0 --device mps --precision fp32 --strategy single",
+  "epochs_log": [
+    {
+      "epoch": 0,
+      "train_loss": 2.250830445970808,
+      "test_loss": 2.1273770332336426,
+      "test_acc": 0.235,
+      "seconds": 0.9884605000115698,
+      "images_per_sec": 906.460096270425,
+      "lr": 0.0006112604669781572
+    },
+    {
+      "epoch": 1,
+      "train_loss": 2.1276535306658064,
+      "test_loss": 2.110511541366577,
+      "test_acc": 0.19,
+      "seconds": 0.7544663750013569,
+      "images_per_sec": 1187.5943444111588,
+      "lr": 1.2536043909088191e-05
+    }
+  ],
+  "peak_memory_mb": 0.0,
+  "total_seconds": 1.7429268750129268,
+  "median_images_per_sec": 1047.027220340792,
+  "best_test_acc": 0.235,
+  "finished": true
+}
