@@ -1,0 +1,57 @@
+{
+  "name": "gloo-ws1",
+  "world_size": 1,
+  "device_type": "cpu",
+  "backend": null,
+  "precision": "fp32",
+  "compiled": false,
+  "strategy": "single",
+  "batch_size_per_rank": 64,
+  "grad_accum_steps": 1,
+  "effective_batch": 64,
+  "epochs": 3,
+  "model_params": 1806538,
+  "subset_fraction": 0.1,
+  "hardware": "CPU arm",
+  "data_source": "huggingface parquet mirror (rebuilt, no original md5)",
+  "memory_source": "unavailable on cpu: no allocator high water mark",
+  "threads_per_rank": 4,
+  "cpu_cores": 10,
+  "torch_version": "2.14.0",
+  "git_commit": "",
+  "command": "python /Users/tanay/Desktop/distributed-vit-cifar10/src/dvit/train.py --name gloo-ws1 --out runs --epochs 3 --subset-fraction 0.1 --batch-size 64 --num-workers 0 --device cpu --precision fp32 --strategy single",
+  "epochs_log": [
+    {
+      "epoch": 0,
+      "train_loss": 2.1253428718982597,
+      "test_loss": 2.048328332901001,
+      "test_acc": 0.257,
+      "seconds": 34.30438933399273,
+      "images_per_sec": 145.5207364689437,
+      "lr": 0.0004935897435897436
+    },
+    {
+      "epoch": 1,
+      "train_loss": 2.0337089070907006,
+      "test_loss": 1.9696216640472413,
+      "test_acc": 0.295,
+      "seconds": 38.08549420800409,
+      "images_per_sec": 131.07352559838583,
+      "lr": 0.0009935897435897436
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.9433818490077288,
+      "test_loss": 1.8853525104522706,
+      "test_acc": 0.316,
+      "seconds": 20.623262416993384,
+      "images_per_sec": 242.05675605847097,
+      "lr": 4.055009142152066e-07
+    }
+  ],
+  "peak_memory_mb": 0.0,
+  "total_seconds": 93.01314595899021,
+  "median_images_per_sec": 145.5207364689437,
+  "best_test_acc": 0.316,
+  "finished": true
+}
