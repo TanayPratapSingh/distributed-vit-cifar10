@@ -123,8 +123,17 @@ def main(argv: list[str] | None = None) -> int:
     criterion = nn.CrossEntropyLoss(label_smoothing=tcfg.label_smoothing)
 
     _, needs_scaler = pick_amp_dtype(ctx.device)
-    scaler = (torch.amp.GradScaler(ctx.device.type)
-              if (tcfg.precision == "amp" and needs_scaler) else None)
+    scaler = None
+    if tcfg.precision == "amp" and needs_scaler:
+        if tcfg.strategy == "fsdp" and ctx.is_distributed:
+            # FSDP shards gradients, so the ordinary GradScaler would test for
+            # inf and nan against one shard and let each rank reach a different
+            # conclusion about whether to skip the step. ShardedGradScaler
+            # reduces that decision across ranks first.
+            from torch.distributed.fsdp.sharded_grad_scaler import ShardedGradScaler
+            scaler = ShardedGradScaler()
+        else:
+            scaler = torch.amp.GradScaler(ctx.device.type)
 
     name = args.name or default_name(args, ctx)
     record = RunRecord(
