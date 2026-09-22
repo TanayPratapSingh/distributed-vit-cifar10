@@ -6,7 +6,7 @@ set -euo pipefail
 
 nvidia-smi --query-gpu=index,name,memory.total --format=csv
 
-git clone https://github.com/USER/distributed-vit-cifar10.git || true
+git clone https://github.com/TanayPratapSingh/distributed-vit-cifar10.git || true
 cd distributed-vit-cifar10
 
 pip install -q --no-deps -e .          # --no-deps: keep Kaggle CUDA torch
