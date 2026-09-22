@@ -137,7 +137,16 @@ retrofitted:
    all reduce is not free.
 2. FSDP loses to DDP. At 1.8M parameters there is nearly nothing to shard and
    the extra collectives are pure overhead.
-3. amp is a large win on T4. fp16 with a GradScaler, not bf16: T4 is sm_75.
+3. amp is a large win on T4. fp16 with a GradScaler, not bf16.
+
+A correction found on the hardware itself, before the sweep ran: on a Tesla
+T4, `torch.cuda.is_bf16_supported()` returns **True**. T4 is sm_75 Turing and
+has no hardware bf16, so that True reflects emulation. The original
+`pick_amp_dtype` trusted the call and would have selected an emulated
+software path for every amp run, then reported the resulting slowdown as a
+mixed precision measurement. Selection now reads compute capability, where
+bf16 means sm_80 and later. This is the fourth bug in the project caused by
+an API answering a slightly different question than the one being asked.
 
 ## 5. Bugs found while building this
 
@@ -151,6 +160,7 @@ The most useful artifact of the week, kept deliberately.
 | 4 | MPS runs reported a peak memory figure | `torch.mps.current_allocated_memory` is instantaneous, read after activations were freed. There is no MPS high water mark | Report memory only where an allocator peak exists, and record `memory_source` |
 | 5 | Parameter count in two docstrings said 2.7M | Written from an estimate before the model was built | Corrected to the measured 1,806,538 |
 | 6 | FSDP runs would have under clipped gradients | `torch.nn.utils.clip_grad_norm_` sees only the local shard, so each rank clips against a norm computed from a fraction of the gradient | Use FSDP's own collective aware `model.clip_grad_norm_`. Found by inspection, not by execution, because there is no CUDA device here |
+| 8 | Every T4 amp run would have used emulated bf16 | `torch.cuda.is_bf16_supported()` returns True on sm_75, counting emulation as support | Select from `torch.cuda.get_device_capability`, bf16 only at sm_80 and later. Caught by reading the first cell of the Kaggle run |
 | 7 | The gloo suite reported 146, 288 and 343 img/s on a rerun, against 521, 632 and 814 the first time | The rerun overlapped the MPS suite. Both were competing for the same 10 cores | Benchmarks are run on an idle machine. Numbers taken under concurrent load are discarded, not reconciled |
 
 Bug 3 is the one worth telling in an interview. The failure mode was not a

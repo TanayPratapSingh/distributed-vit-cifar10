@@ -46,12 +46,27 @@ class TrainConfig:
     seed: int = 0
 
 
+def amp_dtype_for_capability(major: int) -> tuple[torch.dtype, bool]:
+    """Pick the autocast dtype from a CUDA compute capability major version.
+
+    Split out from device inspection so it can be tested without a GPU.
+
+    Hardware bf16 arrives with Ampere, sm_80. Do NOT use
+    `torch.cuda.is_bf16_supported()` for this: on a T4 (sm_75) it returns
+    True, because recent PyTorch counts emulated bf16 as supported. Taking
+    that at face value selects a software emulated path and quietly measures
+    a slowdown while reporting it as mixed precision.
+    """
+    if major >= 8:
+        return torch.bfloat16, False
+    return torch.float16, True          # Turing, Volta: fp16 plus a scaler
+
+
 def pick_amp_dtype(device: torch.device) -> tuple[torch.dtype, bool]:
     """Return (dtype, needs_grad_scaler) for autocast on this device."""
     if device.type == "cuda":
-        if torch.cuda.is_bf16_supported():
-            return torch.bfloat16, False
-        return torch.float16, True      # T4, V100: fp16 plus scaler
+        major, _ = torch.cuda.get_device_capability(device)
+        return amp_dtype_for_capability(major)
     if device.type == "mps":
         return torch.float16, False     # no GradScaler support on mps
     return torch.bfloat16, False        # cpu autocast
