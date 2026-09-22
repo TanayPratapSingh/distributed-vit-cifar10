@@ -44,6 +44,7 @@ class RunRecord:
     epochs: int
     model_params: int
     subset_fraction: float = 1.0
+    amp_dtype: str = ""
     hardware: str = ""
     data_source: str = ""
     memory_source: str = ""

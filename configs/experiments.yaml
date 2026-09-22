@@ -47,3 +47,18 @@ kaggle:
     - {name: t4-ws2-ddp-amp-compiled, nproc: 2, precision: amp, strategy: ddp, compile: true}
     - {name: t4-ws2-fsdp-amp,    nproc: 2, precision: amp,  strategy: fsdp}
     - {name: t4-ws2-ddp-amp-ga2, nproc: 2, precision: amp,  strategy: ddp, grad-accum-steps: 2}
+
+kaggle-amp:
+  # The amp subset of the kaggle suite. Exists because the first 2x T4 run
+  # executed before the bf16 selection fix, so every amp row there requested
+  # bf16 on sm_75 and torch inductor answered with "Tesla T4 does not support
+  # bfloat16 compilation natively, skipping". Those rows are not mixed
+  # precision measurements. The two fp32 rows from that run are unaffected and
+  # are not repeated here.
+  defaults: {epochs: 30, batch-size: 128, num-workers: 2, device: cuda}
+  runs:
+    - {name: t4-ws1-amp,         nproc: 1, precision: amp,  strategy: single}
+    - {name: t4-ws2-ddp-amp,     nproc: 2, precision: amp,  strategy: ddp}
+    - {name: t4-ws2-ddp-amp-compiled, nproc: 2, precision: amp, strategy: ddp, compile: true}
+    - {name: t4-ws2-fsdp-amp,    nproc: 2, precision: amp,  strategy: fsdp}
+    - {name: t4-ws2-ddp-amp-ga2, nproc: 2, precision: amp,  strategy: ddp, grad-accum-steps: 2}

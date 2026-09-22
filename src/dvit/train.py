@@ -122,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
     optimizer = build_optimizer(model, tcfg)
     criterion = nn.CrossEntropyLoss(label_smoothing=tcfg.label_smoothing)
 
-    _, needs_scaler = pick_amp_dtype(ctx.device)
+    amp_dtype, needs_scaler = pick_amp_dtype(ctx.device)
     scaler = None
     if tcfg.precision == "amp" and needs_scaler:
         if tcfg.strategy == "fsdp" and ctx.is_distributed:
@@ -145,6 +145,8 @@ def main(argv: list[str] | None = None) -> int:
         effective_batch=dcfg.batch_size * ctx.world_size * tcfg.grad_accum_steps,
         epochs=tcfg.epochs, subset_fraction=dcfg.subset_fraction,
         model_params=n_params,
+        amp_dtype=(str(amp_dtype).replace("torch.", "")
+                   if tcfg.precision == "amp" else "fp32"),
         hardware=describe_hardware(ctx.device),
         data_source=describe_source(dcfg.root),
         memory_source=memory_source(ctx.device),
@@ -157,7 +159,8 @@ def main(argv: list[str] | None = None) -> int:
     if ctx.is_main:
         print(f"[{name}] {record.hardware} | world_size={ctx.world_size} "
               f"backend={ctx.backend} | params={n_params:,} "
-              f"| effective_batch={record.effective_batch}")
+              f"| effective_batch={record.effective_batch} "
+              f"| autocast={record.amp_dtype}")
 
     reset_peak_memory(ctx.device)
     steps_per_epoch = max(1, len(train_loader) // max(1, tcfg.grad_accum_steps))
