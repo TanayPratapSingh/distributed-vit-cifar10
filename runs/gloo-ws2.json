@@ -19,7 +19,7 @@
   "cpu_cores": 10,
   "torch_version": "2.14.0",
   "git_commit": "",
-  "command": "torchrun /Users/tanay/Desktop/distributed-vit-cifar10/src/dvit/launch.py --nproc 2 -- --name gloo-ws2 --out runs --epochs 3 --subset-fraction 0.1 --batch-size 64 --num-workers 0 --device cpu --precision fp32 --strategy ddp",
+  "command": "python -m dvit.launch --nproc 2 -- --name gloo-ws2 --out runs --epochs 3 --subset-fraction 0.1 --batch-size 64 --num-workers 0 --device cpu --precision fp32 --strategy ddp",
   "epochs_log": [
     {
       "epoch": 0,

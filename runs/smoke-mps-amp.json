@@ -16,7 +16,7 @@
   "memory_source": "unavailable on mps: no allocator high water mark",
   "torch_version": "2.14.0",
   "git_commit": "",
-  "command": "python /Users/tanay/Desktop/distributed-vit-cifar10/src/dvit/train.py --name smoke-mps-amp --out runs --epochs 2 --subset-fraction 0.02 --num-workers 0 --warmup-epochs 0 --device mps --precision amp --strategy single",
+  "command": "python -m dvit.train --name smoke-mps-amp --out runs --epochs 2 --subset-fraction 0.02 --num-workers 0 --warmup-epochs 0 --device mps --precision amp --strategy single",
   "epochs_log": [
     {
       "epoch": 0,

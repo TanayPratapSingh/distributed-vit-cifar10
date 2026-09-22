@@ -19,7 +19,7 @@
   "cpu_cores": 10,
   "torch_version": "2.14.0",
   "git_commit": "",
-  "command": "python /Users/tanay/Desktop/distributed-vit-cifar10/src/dvit/train.py --name gloo-ws1 --out runs --epochs 3 --subset-fraction 0.1 --batch-size 64 --num-workers 0 --device cpu --precision fp32 --strategy single",
+  "command": "python -m dvit.train --name gloo-ws1 --out runs --epochs 3 --subset-fraction 0.1 --batch-size 64 --num-workers 0 --device cpu --precision fp32 --strategy single",
   "epochs_log": [
     {
       "epoch": 0,

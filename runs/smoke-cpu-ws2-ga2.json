@@ -16,7 +16,7 @@
   "memory_source": "unavailable on cpu: no allocator high water mark",
   "torch_version": "2.14.0",
   "git_commit": "",
-  "command": "torchrun /Users/tanay/Desktop/distributed-vit-cifar10/src/dvit/launch.py --nproc 2 -- --name smoke-cpu-ws2-ga2 --out runs --epochs 2 --subset-fraction 0.02 --num-workers 0 --warmup-epochs 0 --device cpu --precision fp32 --strategy ddp --grad-accum-steps 2",
+  "command": "python -m dvit.launch --nproc 2 -- --name smoke-cpu-ws2-ga2 --out runs --epochs 2 --subset-fraction 0.02 --num-workers 0 --warmup-epochs 0 --device cpu --precision fp32 --strategy ddp --grad-accum-steps 2",
   "epochs_log": [
     {
       "epoch": 0,

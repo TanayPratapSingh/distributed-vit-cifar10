@@ -19,7 +19,7 @@
   "cpu_cores": 10,
   "torch_version": "2.14.0",
   "git_commit": "",
-  "command": "python /Users/tanay/Desktop/distributed-vit-cifar10/src/dvit/train.py --name mps-amp-compiled --out runs --epochs 30 --batch-size 128 --num-workers 4 --device mps --precision amp --strategy single --compile",
+  "command": "python -m dvit.train --name mps-amp-compiled --out runs --epochs 30 --batch-size 128 --num-workers 4 --device mps --precision amp --strategy single --compile",
   "epochs_log": [
     {
       "epoch": 0,
