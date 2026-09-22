@@ -68,7 +68,25 @@ def default_name(args, ctx: DistContext) -> str:
     return "-".join(bits)
 
 
+def reproduce_command(argv: list[str], world_size: int) -> str:
+    """A portable command line that reruns this configuration.
+
+    Recorded instead of sys.argv because sys.argv[0] is an absolute path on
+    the machine that happened to run it, which is neither reproducible for
+    anyone else nor anything a public artifact should carry.
+    """
+    args = " ".join(argv)
+    if world_size > 1:
+        return f"python -m dvit.launch --nproc {world_size} -- {args}"
+    return f"python -m dvit.train {args}"
+
+
 def main(argv: list[str] | None = None) -> int:
+    # Captured before parsing so the artifact can record a command that
+    # actually reproduces the run. sys.argv[0] is the module file path,
+    # and under dvit.launch sys.argv belongs to the launcher, so neither
+    # is usable directly.
+    effective_argv = list(argv) if argv is not None else sys.argv[1:]
     args = parse_args(argv)
 
     try:
@@ -124,7 +142,7 @@ def main(argv: list[str] | None = None) -> int:
         threads_per_rank=torch.get_num_threads(),
         cpu_cores=os.cpu_count() or 0,
         torch_version=torch.__version__, git_commit=git_commit(),
-        command=" ".join(["torchrun" if ctx.is_distributed else "python", *sys.argv]),
+        command=reproduce_command(effective_argv, ctx.world_size),
     )
 
     if ctx.is_main:
