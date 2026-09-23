@@ -11,15 +11,15 @@ baseline.
 
 ## Current state
 
-**Verified by execution on an Apple M5:** model, process group setup, both
-launchers, data loading from the mirror, the full training and eval loop, AMP
-on MPS, gradient accumulation, DDP over gloo, the sweep runner, the dashboard
-generator, and the 18 test suite.
+**Verified by execution.** Everything. The model, both launchers, data
+loading, the training and eval loop, AMP on both MPS and CUDA, gradient
+accumulation, DDP over gloo and over nccl, FSDP, the sweep runner, the
+dashboard generator, and the 21 test suite. Three hardware groups have real
+measurements: Apple M5, CPU gloo, and 2x Tesla T4 on Kaggle.
 
-**Written but never executed:** everything CUDA. `nccl` backend selection,
-FSDP, `torch.cuda.max_memory_allocated` reporting, fp16 plus GradScaler, and
-the whole `kaggle` suite. There is no CUDA device on this machine. Expect real
-bugs the first time `notebooks/kaggle_2xt4.ipynb` runs.
+**Not yet attempted.** More than 2 ranks, multi node, a model large enough for
+FSDP to make sense, and cross encoder scale attention. The 2x T4 ceiling is a
+property of free Kaggle, not of the code.
 
 ## House rules
 
@@ -41,14 +41,16 @@ bugs the first time `notebooks/kaggle_2xt4.ipynb` runs.
 
 ## Next steps, in order
 
-1. Finish the `laptop` suite and fill section 3 of `RESULTS.md`.
-2. Run `notebooks/kaggle_2xt4.ipynb` on Kaggle at GPU T4 x2. This is the only
-   step that produces a real multi device scaling curve. Score the three
-   predictions in section 4.
-3. Bring `runs/t4-*.json` home, rerun `python -m dvit.report`, and the
-   dashboard shows both hardware groups side by side.
-4. Only then consider a larger model. FSDP is expected to lose at 1.8M
-   parameters, and confirming that is more interesting than avoiding it.
+1. The scaling story has a gap worth closing: amp at 2 ranks reaches only 57
+   percent efficiency against fp32's 98 percent. Profile it rather than guess.
+   The candidates are the nccl all reduce and the 2 dataloader workers per
+   rank. Raising `--num-workers` and re measuring is the cheapest first test.
+2. If input bound, move augmentation to the GPU and re measure. If
+   communication bound, try gradient bucketing size and compression.
+3. A larger model would make FSDP a fair fight. At 1.8M parameters its 0.66x
+   is a foregone conclusion rather than a finding.
+4. More than 2 ranks needs paid hardware. Everything in the code path already
+   supports it.
 
 ## Commands
 

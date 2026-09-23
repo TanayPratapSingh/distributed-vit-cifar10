@@ -113,40 +113,88 @@ moved accuracy materially, that would have been a bug report, not a result.
 
 ## 4. Real multi device scaling, 2x T4
 
-**Not yet measured.** This is the table the project exists for, and it is empty
-on purpose rather than filled with a plausible guess.
+30 epochs, full CIFAR-10, batch 128 per rank, nccl, torch 2.10.0+cu128,
+all seven from commit `33bcd11`. Every amp run recorded `amp_dtype: float16`,
+which the artifacts carry so it can be checked rather than assumed.
 
-Run `notebooks/kaggle_2xt4.ipynb` on Kaggle with the accelerator set to
-GPU T4 x2, download `runs-t4.zip`, unzip into `runs/`, and rerun
-`python -m dvit.report`.
-
-| Run | Ranks | Strategy | Precision | img/s | Speedup | Efficiency | Peak MB | Best top-1 |
+| Run | Ranks | Strategy | Precision | img/s | Rank speedup | vs fp32 | Peak MB | Top-1 |
 |---|---|---|---|---|---|---|---|---|
-| `t4-ws1-fp32` | 1 | single | fp32 | | baseline | | | |
-| `t4-ws1-amp` | 1 | single | fp16 | | | | | |
-| `t4-ws2-ddp-fp32` | 2 | DDP | fp32 | | | | | |
-| `t4-ws2-ddp-amp` | 2 | DDP | fp16 | | | | | |
-| `t4-ws2-ddp-amp-compiled` | 2 | DDP | fp16 + compile | | | | | |
-| `t4-ws2-fsdp-amp` | 2 | FSDP | fp16 | | | | | |
-| `t4-ws2-ddp-amp-ga2` | 2 | DDP | fp16, accum 2 | | | | | |
+| `t4-ws1-fp32` | 1 | single | fp32 | 1,853 | baseline | reference | 553 | 80.70% |
+| `t4-ws1-amp` | 1 | single | fp16 | 3,810 | baseline | 2.06x | 347 | 80.52% |
+| `t4-ws2-ddp-fp32` | 2 | DDP | fp32 | 3,637 | 1.96x (98%) | 1.96x | 561 | 80.01% |
+| `t4-ws2-ddp-amp` | 2 | DDP | fp16 | 4,376 | 1.15x (57%) | 2.36x | 354 | 79.71% |
+| `t4-ws2-ddp-amp-compiled` | 2 | DDP | fp16 + compile | 4,706 | no baseline | 2.54x | 345 | 80.09% |
+| `t4-ws2-ddp-amp-ga2` | 2 | DDP | fp16, accum 2 | 4,393 | no baseline | 2.37x | 361 | 80.15% |
+| `t4-ws2-fsdp-amp` | 2 | FSDP | fp16 | 2,884 | 0.76x (38%) | 1.56x | 338 | 79.41% |
 
-Predictions recorded before running, so they can be scored rather than
-retrofitted:
+```bash
+python -m dvit.sweep kaggle --continue-on-error
+```
 
-1. DDP at 2 ranks lands near 1.8x, not 2x. The model is small and the
-   all reduce is not free.
-2. FSDP loses to DDP. At 1.8M parameters there is nearly nothing to shard and
-   the extra collectives are pure overhead.
-3. amp is a large win on T4. fp16 with a GradScaler, not bf16.
+Rank speedup holds every other setting fixed and varies only rank count. It
+reads "no baseline" where no matching single rank run exists, rather than
+being filled with a ratio against a different configuration.
 
-A correction found on the hardware itself, before the sweep ran: on a Tesla
-T4, `torch.cuda.is_bf16_supported()` returns **True**. T4 is sm_75 Turing and
-has no hardware bf16, so that True reflects emulation. The original
-`pick_amp_dtype` trusted the call and would have selected an emulated
-software path for every amp run, then reported the resulting slowdown as a
-mixed precision measurement. Selection now reads compute capability, where
-bf16 means sm_80 and later. This is the fourth bug in the project caused by
-an API answering a slightly different question than the one being asked.
+One row needs a caveat the table cannot carry. FSDP's 0.76x compares two
+ranks under FSDP against one rank with no wrapper at all, so it mixes a
+strategy change into a rank change. Read literally it says something true and
+blunt: two T4s running FSDP are slower than one T4 running unwrapped. The
+like for like comparison is FSDP against DDP at the same rank count, which is
+0.66x and is scored under prediction 2.
+
+### The predictions, scored
+
+**1. "DDP at 2 ranks lands near 1.8x, not 2x." Wrong, and wrong in a way that
+turned out to be the most interesting result here.**
+
+In fp32, DDP scales at **1.96x, 98 percent efficiency**. My reasoning was
+backwards: I argued a small model makes the all reduce costly, when a small
+model means small gradient tensors, about 7 MB, which DDP overlaps with the
+backward pass almost entirely.
+
+In amp, the same DDP configuration scales at only **1.15x, 57 percent
+efficiency**. Identical hardware, identical model, identical communication
+volume. The only change is that each GPU now computes twice as fast.
+
+That is the finding worth keeping. Speeding up compute did not speed up the
+job proportionally, it moved the bottleneck. At 1,853 img/s per GPU the
+all reduce and the 2 dataloader workers per rank are comfortably hidden. At
+3,810 img/s they are not. Scaling efficiency is not a property of a
+cluster, it is a property of a cluster running a particular configuration,
+and optimising one layer can degrade it.
+
+**2. "FSDP loses to DDP at this model size." Correct, and by more than expected.**
+
+FSDP reaches 2,884 img/s against DDP's 4,376, so **0.66x**. It buys
+peak memory of 338 MB against 354 MB, a 5 percent saving for a
+34 percent throughput loss. At 1.8M parameters there is almost nothing
+to shard and the extra collectives are close to pure overhead.
+
+"We chose DDP because FSDP measured 0.66x at this model size" is a better
+answer than "we used DDP".
+
+**3. "amp is a large win on T4, fp16 with a GradScaler." Correct.**
+
+2.06x at one rank, 1,853 to 3,810 img/s, with peak memory falling from
+553 MB to 347 MB. This only holds because the dtype fix landed first.
+Before it, every amp run requested bf16 and torch inductor replied "Tesla T4
+does not support bfloat16 compilation natively, skipping". See bug 8.
+
+Worth contrasting with section 3: the identical `--precision amp` flag is a
+2.06x win on T4 and a 0.68x regression on Apple MPS. Precision advice does
+not survive a change of backend.
+
+### Smaller results
+
+* `torch.compile` adds 1.08x on top of DDP plus amp, reaching 4,706 img/s and
+  **2.54x over single GPU fp32** overall. Far less dramatic than the 2.23x it
+  gave on MPS, because CUDA eager kernels are already well optimised and there
+  was less waste to fuse away.
+* Gradient accumulation at 2 microbatches is 1.004x, effectively free. That is
+  the `no_sync()` path doing its job: without it, accumulation would pay an
+  extra all reduce per microbatch and land well under 1.0x.
+* Top-1 spans 79.41% to 80.70% across all seven. These are systems changes,
+  and accuracy behaves like it.
 
 ## 5. Bugs found while building this
 

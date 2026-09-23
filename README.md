@@ -8,6 +8,26 @@ The interesting claim in a project like this is not "I trained a ViT." It is
 run computes the same gradient as the one GPU run." This repository is built
 around making both of those statements checkable.
 
+## The headline result
+
+On 2x Tesla T4 with nccl, 30 epochs on full CIFAR-10:
+
+| | img/s | Efficiency |
+|---|---|---|
+| 1 GPU, fp32 | 1,853 | |
+| 2 GPU, DDP, fp32 | 3,637 | **98%** |
+| 1 GPU, fp16 | 3,810 | |
+| 2 GPU, DDP, fp16 | 4,376 | **57%** |
+
+Same hardware, same model, same 7 MB of gradients to reduce. The only
+difference is that each GPU computes twice as fast, and scaling efficiency
+fell from 98 percent to 57 percent.
+
+Optimising compute did not speed the job up proportionally, it moved the
+bottleneck onto communication and input. Scaling efficiency is a property of
+a configuration, not of a cluster. Full numbers, including FSDP losing to DDP
+at 0.66x, are in `RESULTS.md`.
+
 ## What is here
 
 | Piece | File | What it does |
@@ -49,7 +69,7 @@ This was developed on an Apple M5 with one GPU, so the honest split is:
 |---|---|---|
 | M5 laptop | MPS, 1 device | Single device accuracy and throughput |
 | M5 laptop | gloo, N CPU processes | Gradient correctness, and CPU weak scaling across 10 cores |
-| Kaggle | nccl, 2x T4 | Real speedup and scaling efficiency |
+| Kaggle | nccl, 2x T4 | Real speedup and scaling efficiency. **Measured** |
 
 The `gloo-overhead` suite was built expecting to measure a slowdown: more
 processes on one chip add communication without adding silicon. The
