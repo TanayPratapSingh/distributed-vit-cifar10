@@ -32,6 +32,7 @@ class DataConfig:
     num_workers: int = 4
     augment: bool = True
     subset_fraction: float = 1.0
+    synthetic: bool = False
 
 
 def build_transforms(train: bool, augment: bool):
@@ -75,6 +76,38 @@ class MirrorCIFAR10(Dataset):
         if self.transform is not None:
             img = self.transform(img)
         return img, int(self.labels[i])
+
+
+class SyntheticCIFAR(Dataset):
+    """Pre normalised tensors served straight from memory.
+
+    An instrument, not a dataset. It removes decode, augmentation and worker
+    processes from the measurement so that two rank against one rank isolates
+    compute plus collective communication. If throughput scales here but not
+    on real data, the input pipeline is the bottleneck and the collective is
+    not.
+
+    A small pool is generated once and indexed modulo its size, because
+    materialising 50,000 float32 images would cost about 600 MB and the pixel
+    values are irrelevant. Labels are random, so ANY accuracy from a synthetic
+    run is meaningless and the artifact records `synthetic_data` to keep it
+    out of the dashboard.
+    """
+
+    POOL = 512
+
+    def __init__(self, length: int, seed: int = 0) -> None:
+        g = torch.Generator().manual_seed(seed)
+        self.images = torch.randn(self.POOL, 3, 32, 32, generator=g)
+        self.labels = torch.randint(0, 10, (self.POOL,), generator=g)
+        self.length = length
+
+    def __len__(self) -> int:
+        return self.length
+
+    def __getitem__(self, i: int):
+        j = i % self.POOL
+        return self.images[j], int(self.labels[j])
 
 
 def canonical_available(root: str | Path) -> bool:
@@ -121,13 +154,18 @@ def build_loaders(cfg: DataConfig, ctx: DistContext) -> tuple[DataLoader, DataLo
     root = Path(cfg.root)
     root.mkdir(parents=True, exist_ok=True)
 
-    # Nothing downloads at train time. Fetching is an explicit, separate step
-    # (scripts/fetch_cifar10.py) so that N ranks cannot race on the same files
-    # and so a network failure surfaces before a multi hour job starts.
-    train_ds = load_cifar10(root, train=True,
-                            transform=build_transforms(True, cfg.augment))
-    test_ds = load_cifar10(root, train=False,
-                           transform=build_transforms(False, cfg.augment))
+    if cfg.synthetic:
+        train_ds: Dataset = SyntheticCIFAR(50_000)
+        test_ds: Dataset = SyntheticCIFAR(10_000, seed=1)
+    else:
+        # Nothing downloads at train time. Fetching is an explicit, separate
+        # step (scripts/fetch_cifar10.py) so that N ranks cannot race on the
+        # same files and so a network failure surfaces before a long job
+        # starts.
+        train_ds = load_cifar10(root, train=True,
+                                transform=build_transforms(True, cfg.augment))
+        test_ds = load_cifar10(root, train=False,
+                               transform=build_transforms(False, cfg.augment))
 
     train_ds = _maybe_subset(train_ds, cfg.subset_fraction)
     test_ds = _maybe_subset(test_ds, cfg.subset_fraction)

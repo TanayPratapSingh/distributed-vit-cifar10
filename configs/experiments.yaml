@@ -62,3 +62,27 @@ kaggle-amp:
     - {name: t4-ws2-ddp-amp-compiled, nproc: 2, precision: amp, strategy: ddp, compile: true}
     - {name: t4-ws2-fsdp-amp,    nproc: 2, precision: amp,  strategy: fsdp}
     - {name: t4-ws2-ddp-amp-ga2, nproc: 2, precision: amp,  strategy: ddp, grad-accum-steps: 2}
+
+kaggle-bottleneck:
+  # Diagnoses one number: why DDP plus amp scales at 57 percent when DDP plus
+  # fp32 scales at 98 percent on the same two T4s.
+  #
+  # Two suspects, and this suite separates them rather than correlating.
+  #   input pipeline   vary num-workers at 1 and 2 ranks
+  #   nccl all reduce  the synthetic runs remove the input pipeline entirely,
+  #                    so their 2 rank over 1 rank ratio is compute plus
+  #                    communication with nothing else in it
+  #
+  # Reading it: synthetic scaling near 2x acquits the collective and convicts
+  # the dataloader. Synthetic scaling near 1.15x does the opposite.
+  #
+  # Short runs on purpose. Throughput is the measurement and the synthetic
+  # runs have random labels, so accuracy here is meaningless by construction.
+  defaults: {epochs: 6, batch-size: 128, device: cuda, precision: amp}
+  runs:
+    - {name: t4-ws1-amp-w2,    nproc: 1, num-workers: 2, strategy: single}
+    - {name: t4-ws1-amp-w8,    nproc: 1, num-workers: 8, strategy: single}
+    - {name: t4-ws2-amp-w2,    nproc: 2, num-workers: 2, strategy: ddp}
+    - {name: t4-ws2-amp-w8,    nproc: 2, num-workers: 8, strategy: ddp}
+    - {name: t4-ws1-amp-synth, nproc: 1, num-workers: 0, strategy: single, synthetic-data: true}
+    - {name: t4-ws2-amp-synth, nproc: 2, num-workers: 0, strategy: ddp, synthetic-data: true}

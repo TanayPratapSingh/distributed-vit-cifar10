@@ -45,6 +45,7 @@ class RunRecord:
     model_params: int
     subset_fraction: float = 1.0
     amp_dtype: str = ""
+    synthetic_data: bool = False
     hardware: str = ""
     data_source: str = ""
     memory_source: str = ""

@@ -41,6 +41,8 @@ class Run:
         measurement. The accuracy from one is not. The two judgments are
         separate, so the gloo scaling runs keep their img/s and lose their
         top-1 rather than being written off wholesale."""
+        if self.raw.get("synthetic_data"):
+            return False     # random labels, so any accuracy here is noise
         return (self.raw.get("subset_fraction", 1.0) >= 1.0
                 and self.raw.get("epochs", 0) >= 10)
 
@@ -197,8 +199,14 @@ def scaling_rows(runs: list[Run]) -> str:
             vs_plain = f"{r.median_images_per_sec / plain.median_images_per_sec:.2f}x"
         mem = f"{r.peak_memory_mb:,.0f}" if r.peak_memory_mb else "n/a"
         badge = " <span class='badge smoke'>smoke</span>" if r.is_smoke else ""
-        acc = (f"{r.best_test_acc * 100:.2f}%" if r.accuracy_is_meaningful
-               else f"<span class='eff'>{r.best_test_acc * 100:.1f}% partial</span>")
+        if r.raw.get("synthetic_data"):
+            badge += " <span class='badge smoke'>synthetic</span>"
+        if r.accuracy_is_meaningful:
+            acc = f"{r.best_test_acc * 100:.2f}%"
+        elif r.raw.get("synthetic_data"):
+            acc = "<span class='eff'>n/a</span>"
+        else:
+            acc = f"<span class='eff'>{r.best_test_acc * 100:.1f}% partial</span>"
         rows.append(
             f"<tr><td class='mono'>{escape(r.label)}{badge}</td>"
             f"<td>{escape(r.hardware)}</td><td>{r.world_size}</td>"

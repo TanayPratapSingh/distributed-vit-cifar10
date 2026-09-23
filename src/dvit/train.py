@@ -50,6 +50,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--subset-fraction", type=float, default=1.0,
                    help="fraction of CIFAR-10 to use; for fast smoke runs")
     p.add_argument("--no-augment", action="store_true")
+    p.add_argument("--synthetic-data", action="store_true",
+                   help="in memory tensors, to isolate the input pipeline")
     p.add_argument("--device", default=None, help="cuda | mps | cpu; auto by default")
     p.add_argument("--data-root", default="data")
     p.add_argument("--out", default="runs")
@@ -109,6 +111,7 @@ def main(argv: list[str] | None = None) -> int:
         root=args.data_root, batch_size=args.batch_size,
         num_workers=args.num_workers, augment=not args.no_augment,
         subset_fraction=args.subset_fraction,
+        synthetic=args.synthetic_data,
     )
 
     train_loader, test_loader, sampler = build_loaders(dcfg, ctx)
@@ -145,6 +148,7 @@ def main(argv: list[str] | None = None) -> int:
         effective_batch=dcfg.batch_size * ctx.world_size * tcfg.grad_accum_steps,
         epochs=tcfg.epochs, subset_fraction=dcfg.subset_fraction,
         model_params=n_params,
+        synthetic_data=dcfg.synthetic,
         amp_dtype=(str(amp_dtype).replace("torch.", "")
                    if tcfg.precision == "amp" else "fp32"),
         hardware=describe_hardware(ctx.device),

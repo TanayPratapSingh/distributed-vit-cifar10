@@ -18,7 +18,7 @@ from pathlib import Path
 
 import yaml
 
-BOOL_FLAGS = {"compile", "no-augment"}
+BOOL_FLAGS = {"compile", "no-augment", "synthetic-data"}
 
 
 def default_launcher() -> str:
