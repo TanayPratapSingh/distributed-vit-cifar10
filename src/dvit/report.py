@@ -298,7 +298,12 @@ def render(runs: list[Run]) -> str:
                default=0.0)
     # Smoke runs are excluded: a few hundred images with warmup included
     # is not a throughput measurement, and it should never headline.
-    fastest = max((r.median_images_per_sec for r in real), default=0.0)
+    # Synthetic runs are excluded for a stronger reason: their input is an in
+    # memory tensor pool, so their throughput is an instrument reading, not a
+    # figure for training this model on this dataset. It is the highest number
+    # in the project and it is the one least entitled to be the headline.
+    headline = [r for r in real if not r.raw.get("synthetic_data")]
+    fastest = max((r.median_images_per_sec for r in headline), default=0.0)
 
     stats = [
         ("runs recorded", f"{len(runs)}"),

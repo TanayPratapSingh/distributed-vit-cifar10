@@ -1,0 +1,44 @@
+[
+  {
+    "id": "c1",
+    "start": 0.2,
+    "end": 3.6,
+    "png": "brag-output-2026-09-23-152012/captions/c1.png",
+    "text": "A speedup you cannot verify is not a result."
+  },
+  {
+    "id": "c2",
+    "start": 3.9,
+    "end": 6.0,
+    "png": "brag-output-2026-09-23-152012/captions/c2.png",
+    "text": "Two ranks must equal one process."
+  },
+  {
+    "id": "c3",
+    "start": 6.2,
+    "end": 9.3,
+    "png": "brag-output-2026-09-23-152012/captions/c3.png",
+    "text": "Every number traces to a run artifact."
+  },
+  {
+    "id": "c4",
+    "start": 9.8,
+    "end": 12.4,
+    "png": "brag-output-2026-09-23-152012/captions/c4.png",
+    "text": "<b>2x Tesla T4</b> on Kaggle. Every row measured."
+  },
+  {
+    "id": "c5",
+    "start": 14.9,
+    "end": 17.7,
+    "png": "brag-output-2026-09-23-152012/captions/c5.png",
+    "text": "<m>fp32</m> scales at <b>98%</b>. <m>amp</m> drops to <b>57%</b>."
+  },
+  {
+    "id": "c6",
+    "start": 18.3,
+    "end": 21.9,
+    "png": "brag-output-2026-09-23-152012/captions/c6.png",
+    "text": "Remove the dataloader and it returns to <b>96%</b>."
+  }
+]
