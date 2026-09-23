@@ -27,6 +27,12 @@ property of free Kaggle, not of the code.
    `RESULTS.md` traces to a file in `runs/`. The dashboard reads those
    artifacts and nothing else. If a table cell is unknown, it stays empty and
    says "not yet measured".
+
+   This is enforced, not trusted. `make verify` extracts every number with a
+   measurement unit from the docs and fails if it does not round to some
+   artifact value, or to a ratio between two artifact values on the same
+   hardware. It found five unsupported claims the first time it ran. Run
+   `make gate` before publishing anything.
 2. **Never weaken a check to make something pass.** The md5 failure in bug 2
    was fixable in one line by disabling torchvision integrity checking. That
    would have been the wrong line.

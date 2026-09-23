@@ -1,5 +1,5 @@
 VENV := .venv/bin
-.PHONY: install test smoke laptop gloo kaggle report dashboard clean
+.PHONY: install test smoke laptop gloo kaggle report dashboard verify gate clean
 
 install:
 	python3 -m venv .venv
@@ -27,6 +27,12 @@ kaggle:
 
 report dashboard:
 	$(VENV)/python -m dvit.report
+
+verify:
+	$(VENV)/python -m dvit.verify_claims
+
+gate: test verify
+	@echo "tests pass and every unit bearing number traces to an artifact"
 
 clean:
 	rm -rf runs/*.json dashboard/index.html .pytest_cache

@@ -1,0 +1,55 @@
+DISTRIBUTED ViT ON CIFAR-10 -- share copy
+repo: https://github.com/TanayPratapSingh/distributed-vit-cifar10
+
+--- short (X) ---------------------------------------------------------------
+
+Trained a ViT across 2x T4s and got 98% scaling efficiency.
+
+Then I turned on mixed precision and it dropped to 57%.
+
+Same hardware. Same model. Same 7MB of gradients. The only change was that
+each GPU got twice as fast.
+
+Removing the dataloader restored it to 96%. It was never the GPUs.
+
+--- medium (LinkedIn) -------------------------------------------------------
+
+I built a distributed training pipeline for a vision transformer on CIFAR-10,
+with one rule: every claim has to be checkable.
+
+The first result was the one I expected. DDP across 2x Tesla T4 scaled at
+1.96x, 98 percent efficiency.
+
+The second result was not. Turning on mixed precision doubled per GPU compute
+and scaling efficiency collapsed to 57 percent. Identical hardware, identical
+model, identical communication volume.
+
+So I built an instrument instead of guessing. A synthetic input mode feeds the
+GPUs pre normalised tensors, removing decode, augmentation and worker
+processes entirely. Under it the same configuration scales at 1.92x, 96
+percent. The all reduce was innocent the whole time. The host has 4 vCPUs, one
+T4 in fp16 already consumes everything 4 cores can decode, and the second GPU
+was simply unfed.
+
+Optimising compute did not shorten the job. It moved the bottleneck somewhere
+the distributed layer has no say.
+
+The repo also ships the part most projects skip: a test that spawns a real
+process group and proves 2 ranks compute the same gradient as 1 process over
+the same batch, plus a second test that deliberately computes the wrong thing
+so the first one cannot pass trivially. Nine bugs are documented, including
+one where PyTorch reported bf16 support on a T4 that has no hardware bf16.
+
+Every number in the dashboard is generated from run artifacts. None are typed.
+
+--- one liner ---------------------------------------------------------------
+
+Turning on mixed precision made my 2 GPU job scale worse. Here is how I proved
+it was the dataloader and not the interconnect.
+
+--- notes on the video ------------------------------------------------------
+
+22 seconds. Everything on screen is the software running: the terminal is a
+real PTY session recorded with asciinema, the dashboard is real Chromium
+driving the actual generated page. No recreations, no mockups, and no screen
+capture of the desktop.
