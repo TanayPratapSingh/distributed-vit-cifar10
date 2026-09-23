@@ -117,7 +117,7 @@ def svg_bars(runs: list[Run], width: int = 720, row_h: int = 34) -> str:
     if not runs:
         return "<p class='empty'>No throughput data yet.</p>"
     top = max(r.median_images_per_sec for r in runs) or 1.0
-    pad_l, pad_r = 210, 90
+    pad_l, pad_r = 300, 90
     height = row_h * len(runs) + 16
     parts = [f"<svg viewBox='0 0 {width} {height}' role='img' "
              f"aria-label='Median throughput by configuration'>"]
@@ -126,7 +126,10 @@ def svg_bars(runs: list[Run], width: int = 720, row_h: int = 34) -> str:
         w = (r.median_images_per_sec / top) * (width - pad_l - pad_r)
         color = PALETTE[i % len(PALETTE)]
         parts.append(
-            f"<text x='0' y='{y + 15}' class='bar-label'>{escape(r.label)}</text>"
+            # The table badges synthetic runs. The chart must too, or its
+            # tallest bar reads as the best real throughput in the project.
+            f"<text x='0' y='{y + 15}' class='bar-label'>{escape(r.label)}"
+            f"{' (synthetic input)' if r.raw.get('synthetic_data') else ''}</text>"
             f"<rect x='{pad_l}' y='{y}' width='{max(w, 1):.1f}' height='20' rx='4' fill='{color}'/>"
             f"<text x='{pad_l + max(w, 1) + 8:.1f}' y='{y + 15}' class='bar-value'>"
             f"{r.median_images_per_sec:,.0f} img/s</text>"
