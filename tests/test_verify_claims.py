@@ -48,6 +48,16 @@ class TestMeasured:
 
 
 class TestExtraction:
+    def test_percent_sign_is_caught_not_just_the_word(self, tmp_path: Path) -> None:
+        """Regression: a trailing word boundary after the alternation meant
+        `98%` never matched, because a percent sign followed by a space is
+        two non word characters. Only `98 percent` was ever checked, so the
+        gate passed a document while silently skipping most of its figures."""
+        f = tmp_path / "doc.md"
+        f.write_text("Efficiency was 98% in fp32 and 57 percent in fp16.")
+        found = sorted(c.text for c in extract(f) if c.kind == "percent")
+        assert found == ["57", "98"]
+
     def test_units_are_required(self, tmp_path: Path) -> None:
         f = tmp_path / "doc.md"
         f.write_text("Trained for 30 epochs at batch 128, reaching 4,706 img/s.")

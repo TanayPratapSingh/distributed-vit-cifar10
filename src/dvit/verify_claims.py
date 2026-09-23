@@ -41,7 +41,11 @@ PATTERNS = {
     "throughput": re.compile(r"([\d,]+(?:\.\d+)?)\s*img/s"),
     "memory": re.compile(r"\b([\d,]+(?:\.\d+)?)\s*MB\b"),
     "ratio": re.compile(r"\b(\d+\.\d+)x\b"),
-    "percent": re.compile(r"\b(\d+(?:\.\d+)?)\s*(?:%|percent)\b"),
+    # No trailing \b after the alternation: a percent sign followed by a
+    # space is two non word characters, so \b never matches there and every
+    # figure written as 98% was silently skipped. Only the spelled out form
+    # was ever being checked.
+    "percent": re.compile(r"(\d+(?:\.\d+)?)\s*(?:%|percent\b)"),
 }
 
 
