@@ -46,6 +46,7 @@ class RunRecord:
     subset_fraction: float = 1.0
     amp_dtype: str = ""
     synthetic_data: bool = False
+    num_workers: int = 0
     hardware: str = ""
     data_source: str = ""
     memory_source: str = ""

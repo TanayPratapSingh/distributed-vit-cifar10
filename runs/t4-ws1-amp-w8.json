@@ -1,0 +1,87 @@
+{
+  "name": "t4-ws1-amp-w8",
+  "world_size": 1,
+  "device_type": "cuda",
+  "backend": null,
+  "precision": "amp",
+  "compiled": false,
+  "strategy": "single",
+  "batch_size_per_rank": 128,
+  "grad_accum_steps": 1,
+  "effective_batch": 128,
+  "epochs": 6,
+  "model_params": 1806538,
+  "subset_fraction": 1.0,
+  "amp_dtype": "float16",
+  "synthetic_data": false,
+  "hardware": "2x Tesla T4",
+  "data_source": "canonical (cs.toronto.edu tarball, md5 verified by torchvision)",
+  "memory_source": "torch.cuda.max_memory_allocated",
+  "threads_per_rank": 2,
+  "cpu_cores": 4,
+  "torch_version": "2.10.0+cu128",
+  "git_commit": "2e788b1",
+  "command": "python -m dvit.train --name t4-ws1-amp-w8 --out runs --epochs 6 --batch-size 128 --device cuda --precision amp --num-workers 8 --strategy single",
+  "epochs_log": [
+    {
+      "epoch": 0,
+      "train_loss": 1.9182289557579235,
+      "test_loss": 1.7452066055297852,
+      "test_acc": 0.4257,
+      "seconds": 15.282760187999884,
+      "images_per_sec": 3266.425657794296,
+      "lr": 0.0004987179487179487
+    },
+    {
+      "epoch": 1,
+      "train_loss": 1.7041067523834033,
+      "test_loss": 1.65179501953125,
+      "test_acc": 0.4673,
+      "seconds": 14.299841772000036,
+      "images_per_sec": 3490.9477178793973,
+      "lr": 0.0009987179487179487
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.60621870358785,
+      "test_loss": 1.50168018951416,
+      "test_acc": 0.5377,
+      "seconds": 13.834182736999992,
+      "images_per_sec": 3608.4531301214683,
+      "lr": 0.0008542646736550868
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.483640201886495,
+      "test_loss": 1.4138310691833496,
+      "test_acc": 0.5795,
+      "seconds": 13.704436666999754,
+      "images_per_sec": 3642.615979991883,
+      "lr": 0.0005010069200417006
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.3613148799309365,
+      "test_loss": 1.2978729106903075,
+      "test_acc": 0.6333,
+      "seconds": 13.838291388000016,
+      "images_per_sec": 3607.3817641452847,
+      "lr": 0.00014715932632411146
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.2811740707128476,
+      "test_loss": 1.2662503635406495,
+      "test_acc": 0.6469,
+      "seconds": 13.901834220000183,
+      "images_per_sec": 3590.893058426886,
+      "lr": 1.0138889983690724e-09
+    }
+  ],
+  "peak_memory_mb": 347.0078125,
+  "total_seconds": 84.86134697199986,
+  "median_images_per_sec": 3599.1374112860854,
+  "best_test_acc": 0.6469,
+  "finished": true,
+  "num_workers": 8
+}

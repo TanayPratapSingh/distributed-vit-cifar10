@@ -149,6 +149,7 @@ def main(argv: list[str] | None = None) -> int:
         epochs=tcfg.epochs, subset_fraction=dcfg.subset_fraction,
         model_params=n_params,
         synthetic_data=dcfg.synthetic,
+        num_workers=dcfg.num_workers,
         amp_dtype=(str(amp_dtype).replace("torch.", "")
                    if tcfg.precision == "amp" else "fp32"),
         hardware=describe_hardware(ctx.device),

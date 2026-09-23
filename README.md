@@ -23,10 +23,16 @@ Same hardware, same model, same 7 MB of gradients to reduce. The only
 difference is that each GPU computes twice as fast, and scaling efficiency
 fell from 98 percent to 57 percent.
 
+Then an isolation experiment found where it went. Feeding the same
+configuration synthetic tensors instead of CIFAR-10, so the dataloader is out
+of the measurement entirely, restores **1.92x at 96 percent**. The nccl all
+reduce was never the problem. Kaggle gives 4 vCPUs, one T4 in fp16 already
+eats everything 4 cores can decode, and the second GPU goes unfed.
+
 Optimising compute did not speed the job up proportionally, it moved the
-bottleneck onto communication and input. Scaling efficiency is a property of
-a configuration, not of a cluster. Full numbers, including FSDP losing to DDP
-at 0.66x, are in `RESULTS.md`.
+bottleneck off the GPU and onto the host, where the distributed layer has no
+say. Full numbers, including FSDP losing to DDP at 0.66x, are in
+`RESULTS.md`.
 
 ## What is here
 

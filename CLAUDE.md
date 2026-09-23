@@ -41,16 +41,18 @@ property of free Kaggle, not of the code.
 
 ## Next steps, in order
 
-1. The scaling story has a gap worth closing: amp at 2 ranks reaches only 57
-   percent efficiency against fp32's 98 percent. Profile it rather than guess.
-   The candidates are the nccl all reduce and the 2 dataloader workers per
-   rank. Raising `--num-workers` and re measuring is the cheapest first test.
-2. If input bound, move augmentation to the GPU and re measure. If
-   communication bound, try gradient bucketing size and compression.
-3. A larger model would make FSDP a fair fight. At 1.8M parameters its 0.66x
-   is a foregone conclusion rather than a finding.
-4. More than 2 ranks needs paid hardware. Everything in the code path already
-   supports it.
+The 57 percent question from section 4 is closed. Section 5 isolated it with
+`--synthetic-data`: the collective scales at 96 percent, and the ceiling is a
+4 vCPU host that cannot feed two T4s. Remaining work follows from that.
+
+1. Confirm the diagnosis by removing the ceiling rather than inferring it.
+   Either GPU side augmentation, or the same suite on a host with more cores.
+   Neither is possible on free Kaggle, so this needs paid hardware.
+2. A larger model would make FSDP a fair fight. At 1.8M parameters its 0.66x
+   is arithmetic, not a finding.
+3. More than 2 ranks. Every code path already supports it.
+
+Do not tune nccl. Section 5 rules it out, and the measurement is in `runs/`.
 
 ## Commands
 

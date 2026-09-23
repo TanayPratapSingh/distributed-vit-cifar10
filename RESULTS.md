@@ -196,7 +196,80 @@ not survive a change of backend.
 * Top-1 spans 79.41% to 80.70% across all seven. These are systems changes,
   and accuracy behaves like it.
 
-## 5. Bugs found while building this
+## 5. Why amp scaled at 57 percent: an isolation experiment
+
+Section 4 left a number unexplained. On the same two T4s, DDP scaled at 98
+percent in fp32 and 57 percent in amp. Two suspects: the nccl all reduce, and
+the input pipeline.
+
+Raising `--num-workers` and watching what happens would have produced a
+correlation. Instead `--synthetic-data` serves pre normalised tensors from a
+small in memory pool, removing decode, augmentation and worker processes
+entirely. Two ranks against one rank under it is compute plus communication
+with nothing else in the measurement.
+
+6 epochs, batch 128 per rank, fp16, 2x T4, all from commit `2e788b1`.
+
+| Input | 1 rank | 2 ranks | Speedup | Efficiency |
+|---|---|---|---|---|
+| **Synthetic, no dataloader** | 3,956 | 7,580 | **1.92x** | **96%** |
+| Real data, 2 workers per rank | 3,462 | 4,073 | 1.18x | 59% |
+| Real data, 8 workers per rank | 3,599 | 3,996 | 1.11x | 56% |
+
+```bash
+python -m dvit.sweep kaggle-bottleneck
+```
+
+### The verdict
+
+**The collective is innocent.** With no dataloader, DDP plus amp scales at
+1.92x, 96 percent efficiency. The all reduce moves about 7 MB and DDP overlaps
+nearly all of it with the backward pass, exactly as it did in fp32.
+
+**The host is the ceiling.** With real data, throughput never passes about
+4,073 img/s no matter how many GPUs or workers are thrown at it. The
+artifacts record `cpu_cores: 4`. Kaggle gives 4 vCPUs, and 4 cores cannot
+decode, crop, flip and normalise CIFAR-10 faster than roughly that rate.
+
+One T4 in fp16 already consumes 3,956 img/s of synthetic input, which is
+within 3 percent of everything the host can produce. So the second
+GPU is not slow, it is unfed.
+
+**More workers made it worse.** 3,996 img/s at 8 workers per rank against
+4,073 at 2. With 4 cores, 16 worker processes buy context switches and
+nothing else. PyTorch warned about this and the measurement agrees with the
+warning.
+
+**The input pipeline was already costing something at one rank.** Real data
+at 1 rank reaches 3,462 img/s against 3,956 synthetic, so
+12 percent is lost to the host before any distribution is involved.
+At 2 ranks that gap widens to 46 percent.
+
+### What this changes
+
+The 57 percent figure was never a distributed systems problem, and no amount
+of tuning nccl would have moved it. It is the ratio between GPU speed and host
+speed, and it only appeared because amp doubled the GPU side.
+
+That reframes section 4's headline. Turning on mixed precision did not reveal
+a flaw in DDP. It moved the bottleneck off the GPU and onto a 4 core host,
+where the distributed layer has no say. The same code on a machine with 16
+cores feeding two T4s would likely scale close to the 96 percent the synthetic
+run shows.
+
+### Honest limits of this experiment
+
+* Synthetic data indexes a 512 image pool, so it is also friendlier to cache
+  than real data would be even with a perfect loader. The 96 percent figure is
+  an upper bound on what fixing the input path could achieve, not a promise.
+* The fix is untested. GPU side augmentation, or `--num-workers` on a host
+  with more cores, would confirm the diagnosis by removing the ceiling. Neither
+  is possible on free Kaggle.
+* Accuracy from the synthetic runs is meaningless by construction, since the
+  labels are random. The artifacts carry `synthetic_data: true` and the
+  dashboard prints n/a rather than the roughly 10 percent those runs report.
+
+## 6. Bugs found while building this
 
 The most useful artifact of the week, kept deliberately.
 
