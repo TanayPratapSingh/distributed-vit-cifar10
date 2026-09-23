@@ -71,11 +71,12 @@ def main(out_dir: str) -> int:
         glide(page, top_of("scaling"), 850)
         page.wait_for_timeout(1500)                  # table header in view
         glide(page, top_of("scaling") + 300, 900)
-        page.wait_for_timeout(2600)                  # the T4 rows
+        # The table is held long enough for two captions, because the claims
+        # they make are printed in these rows. A caption asserting a figure
+        # that is not on screen is the thing this whole project is against.
+        page.wait_for_timeout(5400)                  # the T4 rows
         glide(page, top_of("throughput"), 900)
-        page.wait_for_timeout(2400)                  # throughput bars
-        glide(page, top_of("accuracy"), 800)
-        page.wait_for_timeout(1800)                  # accuracy curves
+        page.wait_for_timeout(2600)                  # throughput bars, outro
 
         ctx.close()
         browser.close()

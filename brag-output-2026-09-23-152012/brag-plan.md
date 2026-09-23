@@ -53,11 +53,12 @@ interesting result is a failure it found in itself.
 | 1 | 0.0-3.2 | terminal | prompt, command typed at human pace | A speedup you cannot verify is not a result. |
 | 2 | 3.2-9.5 | terminal | `pytest test_ddp_equivalence.py` runs, 2 passed | 2 ranks must produce the gradient of 1 process over the same batch. Proven, not assumed. |
 | 3 | 9.5-12.5 | terminal | `python -m dvit.report` -> 24 artifacts | Every number on the dashboard traces to a run artifact. |
-| 4 | 12.5-17.0 | browser | dashboard scaling table, T4 rows | 2x Tesla T4, Kaggle. fp32 scales at 98 percent. |
-| 5 | 17.0-21.0 | browser | dashboard, amp rows in view | Turn on mixed precision and the same cluster drops to 57 percent. |
-| 6 | 21.0-24.0 | browser | throughput chart | Remove the dataloader and it returns to 96 percent. It was never the GPUs. It was a 4 core host. |
+| 4 | 12.5-14.9 | browser | glide to the scaling table | (none, the page breathes) |
+| 5 | 14.95-17.6 | browser | T4 rows held | fp32 scales at 98%. amp drops to 57%. |
+| 6 | 17.85-20.25 | browser | same rows, still held | Remove the dataloader: back to 96%. |
+| 7 | 21.4-23.4 | browser | throughput chart | It was never the GPUs. |
 
-Total 24.0s. Slightly over the 15-25 band's midpoint, justified because two
+Total 23.47s. Slightly over the 15-25 band's midpoint, justified because two
 captions are full sentences and the readability law outranks the duration law.
 
 ## Layout
@@ -84,3 +85,18 @@ because a first pass buried the line the viewer most needed to read.
 
 Screen capture via `ffmpeg -f avfoundation` was ruled out: it would record the
 whole desktop, including this conversation.
+
+## Revision after the first cut
+
+Caption 6 originally ran 18.3 to 21.9s, during which the page had already
+glided to the throughput chart. The strongest claim in the video, that
+removing the dataloader restores 96 percent, was stated over a frame that did
+not contain the figure.
+
+The dashboard hold on the T4 table was extended from 2.6s to 5.4s so captions
+5 and 6 both sit inside it. Every numeric caption is now printed on screen
+beneath it, and the SYNTHETIC badge on that row is visible in the same frame
+as the 96 percent claim.
+
+The caption text is also now checked by `make verify`, which fails if a
+number in `captions.json` does not trace to a run artifact.

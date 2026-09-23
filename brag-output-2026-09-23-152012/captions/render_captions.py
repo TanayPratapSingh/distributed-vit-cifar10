@@ -28,10 +28,12 @@ CAPTIONS = [
     ("c2", 3.90, 6.00, "Two ranks must equal one process."),
     ("c3", 6.20, 9.30, "Every number traces to a run artifact."),
     ("c4", 9.80, 12.40, "<b>2x Tesla T4</b> on Kaggle. Every row measured."),
-    ("c5", 14.90, 17.70,
+    # c5 and c6 both sit inside the 14.89 to 20.29 window where the T4 table
+    # is held, so every figure they state is printed on screen beneath them.
+    ("c5", 14.95, 17.60,
      "<m>fp32</m> scales at <b>98%</b>. <m>amp</m> drops to <b>57%</b>."),
-    ("c6", 18.30, 21.90,
-     "Remove the dataloader and it returns to <b>96%</b>."),
+    ("c6", 17.85, 20.25, "Remove the dataloader: back to <b>96%</b>."),
+    ("c7", 21.40, 23.40, "It was never the GPUs."),
 ]
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8">

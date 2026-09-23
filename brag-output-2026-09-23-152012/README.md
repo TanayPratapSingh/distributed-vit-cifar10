@@ -1,6 +1,6 @@
 # brag output
 
-brag.mp4 is 22.07s, 1280x720, 30fps. brag.jpg is the poster, and it is also
+brag.mp4 is 23.47s, 1280x720, 30fps. brag.jpg is the poster, and it is also
 baked as frame 0 of the video, because players and platforms ignore embedded
 cover art and take the first frame regardless.
 
@@ -53,10 +53,24 @@ sitting on the page unnoticed. All three are fixed, committed and pushed:
 
 ## Honesty
 
+Caption text is verified by the same gate the docs are:
+
+    python -m dvit.verify_claims --captions captions/captions.json
+
+It fails if a number carrying a measurement unit does not round to some
+artifact value, or to a ratio between two artifact values on the same
+hardware.
+
+
 No fixture data exists in this project, so no fixture caption was needed.
 Every figure on screen comes from runs/*.json, and the caption naming the
 hardware appears before any T4 number, because the terminal half was recorded
 on the laptop and the T4 rows were not.
+
+Every numeric caption is also printed on screen in the frame it appears over.
+The first cut failed this: caption 6 claimed 96 percent while the page had
+already scrolled past the row containing it. The table hold was extended so
+captions 5 and 6 both sit on the evidence.
 
 ## Files
 
