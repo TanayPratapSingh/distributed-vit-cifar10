@@ -41,5 +41,6 @@
   "total_seconds": 2.3742570009926567,
   "median_images_per_sec": 647.3993438541271,
   "best_test_acc": 0.275,
-  "finished": true
+  "finished": true,
+  "num_workers": 0
 }

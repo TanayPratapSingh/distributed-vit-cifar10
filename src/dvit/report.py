@@ -76,7 +76,21 @@ def baseline_for(run: Run, runs: list[Run]) -> Run | None:
     for c in runs:
         if (c.world_size == 1 and c.hardware == run.hardware
                 and c.precision == run.precision and c.compiled == run.compiled
-                and c.grad_accum_steps == run.grad_accum_steps):
+                and c.grad_accum_steps == run.grad_accum_steps
+                # These two were missing and it produced a wrong number on the
+                # page: a real data run was being divided by a synthetic data
+                # baseline, which silently reported 1.11x where the matched
+                # comparison is 1.15x. Rank speedup is only meaningful when
+                # the input path is identical too.
+                and bool(c.raw.get("synthetic_data")) == bool(run.raw.get("synthetic_data"))
+                and c.raw.get("num_workers") == run.raw.get("num_workers")
+                # Epochs and subset matter because two suites measured the
+                # same configuration at different lengths, 30 epochs and 6,
+                # and they differ by about 10 percent on warmup weighting
+                # alone. Crossing them produced 1.26x where the matched
+                # comparison is 1.15x.
+                and c.epochs == run.epochs
+                and c.raw.get("subset_fraction", 1.0) == run.raw.get("subset_fraction", 1.0)):
             return c
     return None
 
@@ -93,7 +107,8 @@ def plain_baseline_for(run: Run, runs: list[Run]) -> Run | None:
     for c in runs:
         if (c.world_size == 1 and c.hardware == run.hardware
                 and c.precision == "fp32" and not c.compiled
-                and c.grad_accum_steps == 1):
+                and c.grad_accum_steps == 1
+                and bool(c.raw.get("synthetic_data")) == bool(run.raw.get("synthetic_data"))):
             return c
     return None
 

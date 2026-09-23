@@ -1,0 +1,28 @@
+#!/usr/bin/env expect -f
+# Drives a real interactive bash session. Nothing here is simulated output:
+# the commands run, and whatever they print is what the recording shows.
+set timeout 300
+set send_slow {1 0.042}
+
+set venv "/Users/tanay/Desktop/distributed-vit-cifar10/.venv/bin"
+set newpath "$venv:$env(PATH)"
+set ps1 "$ "
+
+spawn -noecho env PATH=$newpath PS1=$ps1 TERM=xterm-256color BASH_SILENCE_DEPRECATION_WARNING=1 bash --noprofile --norc
+expect -exact "$ "
+
+# Beat 1: let the bare prompt sit, so the hook caption has a clean plate.
+sleep 1.4
+
+# Beat 2: the load bearing test. Two ranks against one process.
+send -s -- "python -m pytest tests/test_ddp_equivalence.py -v -o addopts=\r"
+expect -exact "$ "
+sleep 2.2
+
+# Beat 3: the dashboard is generated, never hand written.
+send -s -- "python -m dvit.report\r"
+expect -exact "$ "
+sleep 2.0
+
+send -- "exit\r"
+expect eof
